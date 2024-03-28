@@ -18,7 +18,7 @@ mongoose
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:5000",
+    origin: "*",
     credentials: true,
   })
 );
