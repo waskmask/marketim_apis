@@ -10,7 +10,7 @@ exports.createProduct = async (req, res) => {
     if (req.files && req.files.length > 0) {
       // Generate a timestamp to use for the thumbnail filename
       const timestamp = Date.now();
-      thumbnailFilename = `thumbnail-${timestamp}.jpg`;
+      thumbnailFilename = `thumbnail-${timestamp}.png`;
       const thumbnailFullPath = `uploads/${thumbnailFilename}`;
 
       // Load the first uploaded image

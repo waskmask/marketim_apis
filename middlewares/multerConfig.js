@@ -5,7 +5,8 @@ const path = require("path");
 // Storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "D:/MarktPrint/backend_apis/uploads/"); // Adjust the path as necessary
+    // Adjust the path as necessary for your server environment
+    cb(null, "./uploads/"); // Using a relative path
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname)); // Naming the file
