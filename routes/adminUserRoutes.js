@@ -13,15 +13,21 @@ router.post("/admin/reset-password", userController.resetPassword);
 
 // logout
 router.post("/admin/logout", (req, res) => {
+  // Destroy session
   req.session.destroy((err) => {
     if (err) {
+      console.log("Error destroying session: ", err);
       return res
         .status(500)
-        .json({ message: "Could not log out, please try again." });
+        .send({ message: "Logout failed, please try again." });
     }
-    res.clearCookie("loginToken"); // Ensure this is the name of your JWT cookie
-    res.clearCookie("connect.sid"); // Clearing the session cookie
-    res.json({ message: "Logout successful" });
+
+    // Clear cookies
+    res.clearCookie("loginToken", { path: "/" }); // Adjust according to your cookie settings
+    res.clearCookie("connect.sid", { path: "/" }); // Adjust if you're using a custom session cookie name
+
+    // Inform the client of successful logout
+    res.send({ message: "Logout successful" });
   });
 });
 
