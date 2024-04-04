@@ -16,10 +16,11 @@ mongoose
   .catch((err) => console.log(err));
 
 // Middleware
+
 const corsOptions = {
-  origin: "*", // Replace with your frontend domain
+  origin: ["http://localhost:5000", "https://marketim.app"],
   credentials: true, // Considering you might be using credentials
-  methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+  methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
@@ -45,7 +46,7 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days in milliseconds
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      secure: process.env.NODE_ENV === "production",
     },
   })
 );

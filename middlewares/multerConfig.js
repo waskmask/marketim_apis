@@ -6,7 +6,7 @@ const path = require("path");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Adjust the path as necessary for your server environment
-    cb(null, "./uploads/"); // Using a relative path
+    cb(null, "./uploads"); // Using a relative path
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname)); // Naming the file
