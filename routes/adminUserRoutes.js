@@ -23,8 +23,8 @@ router.post("/admin/logout", (req, res) => {
     }
 
     // Clear cookies
-    res.clearCookie("loginToken", { path: "/" }); // Adjust according to your cookie settings
-    res.clearCookie("connect.sid", { path: "/" }); // Adjust if you're using a custom session cookie name
+    res.clearCookie("loginToken", { path: "/" });
+    res.clearCookie("connect.sid", { path: "/" });
 
     // Inform the client of successful logout
     res.send({ message: "Logout successful" });
