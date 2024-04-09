@@ -54,11 +54,11 @@ const userController = {
       }
 
       // Save user info in session
-      req.session.user = {
-        id: existingUser._id,
-        email: existingUser.email,
-        role: existingUser.role,
-      };
+      // req.session.user = {
+      //   id: existingUser._id,
+      //   email: existingUser.email,
+      //   role: existingUser.role,
+      // };
       // Check if user status is 'active'
       if (existingUser.status !== "active") {
         return res.status(401).json({
@@ -80,12 +80,12 @@ const userController = {
       );
 
       // Set the token in an HTTP-only cookie
-      res.cookie("loginToken", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      });
+      // res.cookie("loginToken", token, {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === "production",
+      //   sameSite: "strict",
+      //   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      // });
       res.status(200).json({ result: existingUser, token });
       console.log("Login success");
     } catch (error) {
