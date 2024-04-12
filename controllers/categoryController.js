@@ -1,4 +1,18 @@
 const Category = require("../models/category"); // Adjust the path to your Category model
+const redis = require("redis");
+
+let redisClient;
+
+(async () => {
+  redisClient = redis.createClient({
+    host: "localhost",
+    port: 6379,
+  });
+
+  redisClient.on("error", (error) => console.error(`Error : ${error}`));
+
+  await redisClient.connect();
+})();
 
 exports.createCategory = async (req, res) => {
   try {
@@ -38,7 +52,14 @@ exports.createCategory = async (req, res) => {
 // get categories
 exports.getCategories = async (req, res) => {
   try {
+    const cachedDataKey = `allCategories`;
+    let cachedData = await redisClient.get(cachedDataKey);
+    if (cachedData) {
+      console.log("Data found in cache");
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const categories = await Category.find({});
+    await redisClient.set(`allCategories`, JSON.stringify(categories));
     res.status(200).json(categories);
   } catch (error) {
     console.error(error); // Log error for debugging
