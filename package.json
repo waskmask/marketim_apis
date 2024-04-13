@@ -26,6 +26,7 @@
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^8.0.0",
     "redis": "^4.6.13",
-    "sharp": "^0.33.2"
+    "sharp": "^0.33.2",
+    "winston": "^3.13.0"
   }
 }

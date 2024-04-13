@@ -1,17 +1,35 @@
 const Category = require("../models/category"); // Adjust the path to your Category model
 const redis = require("redis");
 
-let redisClient;
+let redisClient = null;
 
 (async () => {
-  redisClient = redis.createClient({
-    host: "localhost",
-    port: 6379,
-  });
+  try {
+    // Create the Redis client
+    redisClient = redis.createClient({
+      url: "redis://localhost:6379", // This is a common way to specify Redis connection details
+    });
 
-  redisClient.on("error", (error) => console.error(`Error : ${error}`));
+    // Connect to Redis
+    await redisClient.connect();
 
-  await redisClient.connect();
+    console.log("Connected to Redis");
+
+    // Properly handle connection errors
+    redisClient.on("error", (error) => {
+      // console.error("Redis Client Error", error);
+      redisClient = null;
+    });
+
+    // Optionally handle the connection end event
+    redisClient.on("end", () => {
+      console.log("Redis connection closed");
+      redisClient = null;
+    });
+  } catch (error) {
+    // console.error("Failed to connect to Redis:", error);
+    redisClient = null;
+  }
 })();
 
 exports.createCategory = async (req, res) => {
@@ -52,17 +70,41 @@ exports.createCategory = async (req, res) => {
 // get categories
 exports.getCategories = async (req, res) => {
   try {
-    const cachedDataKey = `allCategories`;
-    let cachedData = await redisClient.get(cachedDataKey);
-    if (cachedData) {
-      console.log("Data found in cache");
-      return res.status(200).json(JSON.parse(cachedData));
+    let categories;
+    const cachedDataKey = "allCategories";
+
+    if (redisClient) {
+      // Ensure redisClient is available
+      try {
+        const cachedData = await redisClient.get(cachedDataKey);
+        if (cachedData) {
+          console.log("Data found in cache");
+          categories = JSON.parse(cachedData);
+          return res.status(200).json(categories);
+        }
+      } catch (redisError) {
+        console.error(
+          "Redis error, falling back to primary database:",
+          redisError
+        );
+      }
     }
-    const categories = await Category.find({});
-    await redisClient.set(`allCategories`, JSON.stringify(categories));
+
+    // Fetch data from your database as a fallback
+    categories = await Category.find({});
+
+    if (redisClient) {
+      try {
+        await redisClient.set(cachedDataKey, JSON.stringify(categories));
+        console.log("Data cached in Redis");
+      } catch (redisError) {
+        console.error("Failed to cache data in Redis:", redisError);
+      }
+    }
+
     res.status(200).json(categories);
   } catch (error) {
-    console.error(error); // Log error for debugging
+    console.error("Error fetching categories:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
