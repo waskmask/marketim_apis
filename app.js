@@ -25,12 +25,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// app.use(
-//   cors({
-//     origin: "*",
-//     credentials: true,
-//   })
-// );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -61,9 +56,13 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const adminUserRoutes = require("./routes/adminUserRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
+const brandRoutes = require("./routes/brandRoutes");
+const allDataAnalysisRoutes = require("./routes/allDataAnalysisRoutes");
 app.use(adminUserRoutes);
 app.use(categoryRoutes);
+app.use(brandRoutes);
 app.use(productRoutes);
+app.use(allDataAnalysisRoutes);
 
 // Start the server
 const port = process.env.PORT || 3000;

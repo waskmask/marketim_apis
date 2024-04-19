@@ -19,7 +19,7 @@ exports.createProduct = async (req, res) => {
       // Resize the image to 100x100 pixels max without shrinking
       await image
         .resize(100, jimp.AUTO)
-        .quality(60) // Set the quality of the image
+        .quality(100) // Set the quality of the image
         .writeAsync(thumbnailFullPath); // Save the thumbnail
 
       // Update the thumbnail path to store only the filename in the database
@@ -83,7 +83,10 @@ exports.getProduct = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const product = await Product.findById(id).populate("categories"); // Adjust the populate method if needed
+    const product = await Product.findById(id).populate([
+      "categories",
+      "brand",
+    ]); // Adjust the populate method if needed
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
