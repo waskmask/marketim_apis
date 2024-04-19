@@ -64,6 +64,20 @@ app.use(brandRoutes);
 app.use(productRoutes);
 app.use(allDataAnalysisRoutes);
 
+app.use((error, req, res, next) => {
+  console.error(error.stack);
+
+  // Handle Mongoose validation errors
+  if (error.name === "ValidationError") {
+    return res.status(400).json({ message: error.message });
+  }
+
+  // Prevent setting headers after they are sent to the client
+  if (!res.headersSent) {
+    res.status(500).send("Internal Server Error");
+  }
+});
+
 // Start the server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

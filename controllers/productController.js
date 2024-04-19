@@ -4,7 +4,7 @@ const jimp = require("jimp");
 const upload = require("../middlewares/multerConfig");
 const path = require("path");
 
-exports.createProduct = async (req, res) => {
+exports.createProduct = async (req, res, next) => {
   try {
     let thumbnailFilename = "";
     if (req.files && req.files.length > 0) {
@@ -39,10 +39,7 @@ exports.createProduct = async (req, res) => {
     res.status(201).json(savedProduct);
   } catch (error) {
     console.error(error);
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
-    }
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
@@ -64,7 +61,7 @@ exports.createProduct = async (req, res) => {
 // };
 
 // get all products
-exports.getProducts = async (req, res) => {
+exports.getProducts = async (req, res, next) => {
   try {
     const products = await Product.find().populate({
       path: "categories",
@@ -74,12 +71,13 @@ exports.getProducts = async (req, res) => {
 
     res.status(200).json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    next(error);
   }
 };
 
 // get single product
-exports.getProduct = async (req, res) => {
+exports.getProduct = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -95,12 +93,12 @@ exports.getProduct = async (req, res) => {
     res.status(200).json(product);
   } catch (error) {
     console.error(error); // Log the error for debugging
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
 //   update a product
-exports.updateProduct = async (req, res) => {
+exports.updateProduct = async (req, res, next) => {
   const { id } = req.params; // Assuming the product ID is passed as a URL parameter
   const updateFields = req.body; // The fields to update
 
@@ -118,15 +116,12 @@ exports.updateProduct = async (req, res) => {
     res.status(200).json(updatedProduct);
   } catch (error) {
     console.error(error); // Log the error for debugging
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
-    }
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
 // delete a product
-exports.deleteProduct = async (req, res) => {
+exports.deleteProduct = async (req, res, next) => {
   const { id } = req.params; // Assuming the product ID is passed as a URL parameter
 
   try {
@@ -142,6 +137,6 @@ exports.deleteProduct = async (req, res) => {
     });
   } catch (error) {
     console.error(error); // Log the error for debugging
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };

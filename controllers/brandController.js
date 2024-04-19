@@ -29,13 +29,13 @@ exports.createBrand = async (req, res) => {
 };
 
 // get categories
-exports.getBrands = async (req, res) => {
+exports.getBrands = async (req, res, next) => {
   try {
     const brands = await Brand.find({});
     res.status(200).json(brands);
   } catch (error) {
-    console.error(error); // Log error for debugging
-    res.status(500).json({ message: "Internal server error" });
+    console.error(error);
+    next(error);
   }
 };
 
