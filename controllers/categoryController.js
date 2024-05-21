@@ -14,7 +14,7 @@ let redisClient;
   await redisClient.connect();
 })();
 
-exports.createCategory = async (req, res) => {
+exports.createCategory = async (req, res, next) => {
   try {
     const { categoryName } = req.body;
 
@@ -45,12 +45,12 @@ exports.createCategory = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({ message: "Category name already exists" });
     }
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // get categories
-exports.getCategories = async (req, res) => {
+exports.getCategories = async (req, res, next) => {
   try {
     const cachedDataKey = `allCategories`;
     let cachedData = await redisClient.get(cachedDataKey);
@@ -63,12 +63,12 @@ exports.getCategories = async (req, res) => {
     res.status(200).json(categories);
   } catch (error) {
     console.error(error); // Log error for debugging
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
 // update category status
-exports.updateCategoryStatus = async (req, res) => {
+exports.updateCategoryStatus = async (req, res, next) => {
   try {
     const { id, status } = req.body; // Get id and status from the request body
 
@@ -94,12 +94,13 @@ exports.updateCategoryStatus = async (req, res) => {
       category: updatedCategory,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    next(error);
   }
 };
 
 // update category
-exports.updateCategory = async (req, res) => {
+exports.updateCategory = async (req, res, next) => {
   try {
     const { id, status, categoryName } = req.body;
 
@@ -145,6 +146,7 @@ exports.updateCategory = async (req, res) => {
       category: updatedCategory,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    next(error);
   }
 };

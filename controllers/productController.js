@@ -4,7 +4,7 @@ const jimp = require("jimp");
 const upload = require("../middlewares/multerConfig");
 const path = require("path");
 
-exports.createProduct = async (req, res) => {
+exports.createProduct = async (req, res, next) => {
   try {
     let thumbnailFilename = "";
     if (req.files && req.files.length > 0) {
@@ -19,7 +19,7 @@ exports.createProduct = async (req, res) => {
       // Resize the image to 100x100 pixels max without shrinking
       await image
         .resize(100, jimp.AUTO)
-        .quality(60) // Set the quality of the image
+        .quality(100) // Set the quality of the image
         .writeAsync(thumbnailFullPath); // Save the thumbnail
 
       // Update the thumbnail path to store only the filename in the database
@@ -39,32 +39,69 @@ exports.createProduct = async (req, res) => {
     res.status(201).json(savedProduct);
   } catch (error) {
     console.error(error);
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
-    }
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
-// create a product old
-// exports.createProduct = async (req, res) => {
-//   try {
-//     const newProduct = new Product(req.body);
+exports.updateProduct = async (req, res, next) => {
+  const { id } = req.params;
+  const updateFields = req.body;
+  const removedImages = req.body.removedImages
+    ? JSON.parse(req.body.removedImages)
+    : [];
 
-//     const savedProduct = await newProduct.save();
-//     res.status(201).json(savedProduct);
-//   } catch (error) {
-//     console.error(error); // Use console.error to log the error
-//     if (error.name === "ValidationError") {
-//       // Send back a more user-friendly message if needed
-//       return res.status(400).json({ message: error.message });
-//     }
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
+  try {
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Handle file uploads
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map((file) => path.basename(file.path));
+      updateFields.images = [
+        ...product.images.filter((img) => !removedImages.includes(img)),
+        ...newImages,
+      ];
+
+      // Handle thumbnail update if needed
+      const thumbnailFile = req.files[0];
+      if (thumbnailFile) {
+        const timestamp = Date.now();
+        const thumbnailFilename = `thumbnail-${timestamp}.png`;
+        const thumbnailFullPath = `uploads/${thumbnailFilename}`;
+        const image = await jimp.read(thumbnailFile.path);
+        await image
+          .resize(100, jimp.AUTO)
+          .quality(100)
+          .writeAsync(thumbnailFullPath);
+        updateFields.thumbnail = thumbnailFilename;
+      }
+    } else {
+      updateFields.images = product.images.filter(
+        (img) => !removedImages.includes(img)
+      );
+    }
+
+    // Update the product with the new data
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
 
 // get all products
-exports.getProducts = async (req, res) => {
+exports.getProducts = async (req, res, next) => {
   try {
     const products = await Product.find().populate({
       path: "categories",
@@ -74,16 +111,20 @@ exports.getProducts = async (req, res) => {
 
     res.status(200).json(products);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    next(error);
   }
 };
 
 // get single product
-exports.getProduct = async (req, res) => {
+exports.getProduct = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const product = await Product.findById(id).populate("categories"); // Adjust the populate method if needed
+    const product = await Product.findById(id).populate([
+      "categories",
+      "brand",
+    ]); // Adjust the populate method if needed
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -92,38 +133,12 @@ exports.getProduct = async (req, res) => {
     res.status(200).json(product);
   } catch (error) {
     console.error(error); // Log the error for debugging
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-//   update a product
-exports.updateProduct = async (req, res) => {
-  const { id } = req.params; // Assuming the product ID is passed as a URL parameter
-  const updateFields = req.body; // The fields to update
-
-  try {
-    // Find the product by ID and update it with the fields provided in the request body
-    const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
-      new: true, // Return the updated document
-      runValidators: true, // Ensure schema validators run on update
-    });
-
-    if (!updatedProduct) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    res.status(200).json(updatedProduct);
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
-    }
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
 // delete a product
-exports.deleteProduct = async (req, res) => {
+exports.deleteProduct = async (req, res, next) => {
   const { id } = req.params; // Assuming the product ID is passed as a URL parameter
 
   try {
@@ -139,6 +154,6 @@ exports.deleteProduct = async (req, res) => {
     });
   } catch (error) {
     console.error(error); // Log the error for debugging
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };

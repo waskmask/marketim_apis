@@ -18,8 +18,14 @@ router.get("/admin/products", authenticateToken, productController.getProducts);
 // Route to get a single product
 router.get("/admin/product/:id", productController.getProduct);
 
-// Add a route for updating a product
-router.patch("/admin/product/:id", productController.updateProduct);
+// Route for updating a product
+router.patch(
+  "/admin/product/:id",
+  authenticateToken,
+  upload.array("images", 10),
+  productController.updateProduct
+);
+
 router.delete("/admin/product/:id", productController.deleteProduct);
 
 module.exports = router;

@@ -15,6 +15,12 @@ const productSchema = new mongoose.Schema(
         required: true,
       },
     ],
+    brand: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Brand",
+      },
+    ],
     thumbnail: { type: String },
     images: [{ type: String }],
     weight: {
@@ -24,10 +30,17 @@ const productSchema = new mongoose.Schema(
     description: { type: String },
     isHalal: { type: Boolean, default: false },
     organic: { type: Boolean, default: false },
+    vegan: { type: Boolean, default: false },
+    vegetarian: { type: Boolean, default: false },
+    lactose_free: { type: Boolean, default: false },
+    gluten_free: { type: Boolean, default: false },
     handelClass: { type: String },
-    vesa: { type: String },
     base_price: { type: String },
+    unit_price: { type: String },
+    package_type: { type: String },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
+    origin: { type: String },
+    deposit: { type: Boolean, default: false },
   },
   {
     timestamps: true,
