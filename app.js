@@ -58,11 +58,16 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
 const brandRoutes = require("./routes/brandRoutes");
 const allDataAnalysisRoutes = require("./routes/allDataAnalysisRoutes");
+
 app.use(adminUserRoutes);
 app.use(categoryRoutes);
 app.use(brandRoutes);
 app.use(productRoutes);
 app.use(allDataAnalysisRoutes);
+
+// app routes
+const appUserRoutes = require("./routes/appUserRoutes");
+app.use(appUserRoutes);
 
 app.use((error, req, res, next) => {
   console.error(error.stack);

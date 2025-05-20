@@ -1,13 +1,14 @@
-require("dotenv").config();
-const User = require("../models/adminUser");
+require("dotenv").config(); // Ensure this is at the top to load environment variables
+const AppUser = require("../models/appUser"); // Consistent User model import
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 
 const userController = {
   signup: async (req, res) => {
     try {
-      const { email, password, fullName, role } = req.body;
-      const existingUser = await User.findOne({ email });
+      const { email, password } = req.body;
+      const existingUser = await AppUser.findOne({ email });
 
       if (existingUser) {
         return res.status(400).json({ message: "User already exists" });
@@ -15,30 +16,36 @@ const userController = {
 
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      const result = await User.create({
+      const result = await AppUser.create({
         email,
         password: hashedPassword,
-        fullName,
-        role,
+        role: "app_user",
       });
 
-      // Use an environment variable for the JWT secret (process.env.JWT_SECRET)
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw new Error("JWT secret is not defined in environment variables");
+      }
+
       const token = jwt.sign(
         { email: result.email, id: result._id },
-        process.env.JWT_SECRET || process.env.JWT_SECRET,
+        jwtSecret,
         { expiresIn: "30d" }
       );
 
       res.status(201).json({ result, token });
     } catch (error) {
-      res.status(500).json({ message: "Something went wrong" });
+      console.error("Error during signup:", error.message); // Log the error
+      res
+        .status(500)
+        .json({ message: "Something went wrong", error: error.message });
     }
   },
 
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
-      const existingUser = await User.findOne({ email });
+      const existingUser = await AppUser.findOne({ email });
 
       if (!existingUser) {
         return res.status(404).json({ message: "User doesn't exist" });
@@ -53,12 +60,6 @@ const userController = {
         return res.status(400).json({ message: "Invalid credentials" });
       }
 
-      // Save user info in session
-      // req.session.user = {
-      //   id: existingUser._id,
-      //   email: existingUser.email,
-      //   role: existingUser.role,
-      // };
       // Check if user status is 'active'
       if (existingUser.status !== "active") {
         return res.status(401).json({
@@ -79,13 +80,6 @@ const userController = {
         { expiresIn: "30d" }
       );
 
-      // Set the token in an HTTP-only cookie
-      // res.cookie("loginToken", token, {
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV === "production",
-      //   sameSite: "strict",
-      //   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      // });
       res.status(200).json({ result: existingUser, token });
       console.log("Login success");
     } catch (error) {
@@ -96,34 +90,61 @@ const userController = {
   forgotPassword: async (req, res) => {
     try {
       const { email } = req.body;
-      const user = await User.findOne({ email });
+      const user = await AppUser.findOne({ email });
 
       if (!user) {
         return res.status(404).send("User not found.");
       }
 
-      // Generate a 6-digit code
       const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expirationTime = 3600000; // 1 hour in milliseconds
 
       user.resetPasswordCode = resetCode;
-      user.resetPasswordExpires = Date.now() + expirationTime; // Set code to expire in 1 hour
+      user.resetPasswordExpires = Date.now() + expirationTime;
 
       await user.save();
 
-      // Here you would send the resetCode to the user's email or phone
-      // For example: sendResetCodeEmail(user.email, resetCode);
+      // Email setup
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: false,
+        requireTLS: false, // Force the use of TLS
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
 
-      res.send("A reset code has been sent to your email.");
+      const mailOptions = {
+        from: `"Marketim" <${process.env.SMTP_USER}>`, // sender address
+        to: user.email, // list of receivers
+        subject: "Password Reset Code", // Subject line
+        text: `Your password reset code is: ${resetCode}`, // plain text body
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log("Email sent successfully.");
+        res.send("A reset code has been sent to your email.");
+      } catch (emailError) {
+        console.error("Error sending email:", emailError.message);
+        res
+          .status(500)
+          .send("Error in sending the reset code. Please try again later.");
+      }
     } catch (error) {
-      res.status(500).send("Error in sending the reset code.");
+      console.error("Error during forgot password process:", error.message);
+      res
+        .status(500)
+        .send("Error in processing your request. Please try again later.");
     }
   },
 
   resetPassword: async (req, res) => {
     try {
       const { email, resetCode, newPassword } = req.body;
-      const user = await User.findOne({
+      const user = await AppUser.findOne({
         email,
         resetPasswordExpires: { $gt: Date.now() }, // Checks if the code is not expired
       });
