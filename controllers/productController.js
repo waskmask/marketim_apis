@@ -3,6 +3,7 @@ const Category = require("../models/category");
 const jimp = require("jimp");
 const upload = require("../middlewares/multerConfig");
 const path = require("path");
+const fs = require("fs").promises;
 
 exports.createProduct = async (req, res, next) => {
   try {
@@ -46,14 +47,39 @@ exports.createProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   const { id } = req.params;
   const updateFields = req.body;
-  const removedImages = req.body.removedImages
-    ? JSON.parse(req.body.removedImages)
-    : [];
+  const removedImages = Array.isArray(req.body.removedImages)
+    ? req.body.removedImages
+    : [req.body.removedImages];
+  const existingImages = req.body.existingImages || [];
+  let imagesArray = [...existingImages];
 
   try {
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
+    }
+
+    if (product.thumbnail) {
+      try {
+        await fs.unlink(`uploads/${product.thumbnail}`);
+      } catch (error) {
+        console.error(
+          `Failed to delete thumbnail: ${product.thumbnail}`,
+          error
+        );
+      }
+    }
+
+    if (removedImages) {
+      await Promise.all(
+        removedImages.map(async (file) => {
+          try {
+            await fs.unlink(`uploads/${file}`);
+          } catch (error) {
+            console.error(`Failed to delete file: ${file}`, error);
+          }
+        })
+      );
     }
 
     // Handle file uploads
@@ -64,13 +90,15 @@ exports.updateProduct = async (req, res, next) => {
         ...newImages,
       ];
 
+      req.files.map((file) => imagesArray.push(file.filename));
+
       // Handle thumbnail update if needed
-      const thumbnailFile = req.files[0];
+      const thumbnailFile = imagesArray[0];
       if (thumbnailFile) {
         const timestamp = Date.now();
         const thumbnailFilename = `thumbnail-${timestamp}.png`;
         const thumbnailFullPath = `uploads/${thumbnailFilename}`;
-        const image = await jimp.read(thumbnailFile.path);
+        const image = await jimp.read(`uploads/${thumbnailFile}`);
         await image
           .resize(100, jimp.AUTO)
           .quality(100)
@@ -78,9 +106,7 @@ exports.updateProduct = async (req, res, next) => {
         updateFields.thumbnail = thumbnailFilename;
       }
     } else {
-      updateFields.images = product.images.filter(
-        (img) => !removedImages.includes(img)
-      );
+      updateFields.images = imagesArray;
     }
 
     // Update the product with the new data

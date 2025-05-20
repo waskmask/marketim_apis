@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const categoryController = require("../controllers/categoryController"); // Adjust the path to your controller
 const authenticateToken = require("../middlewares/authMiddleware");
+
 // POST request to create a new category
 router.post(
   "/admin/add-category",
