@@ -167,6 +167,86 @@ const userController = {
       res.status(500).send("Error resetting password.");
     }
   },
+  updateCompanyProfile: async (req, res) => {
+    try {
+      const userId = req.user?.id; // Extracted from decoded JWT
+      if (!userId) {
+        return res.status(401).json({ message: "Nicht autorisiert" });
+      }
+
+      const { companyName, street, house_no, city, postcode, companyTxn } =
+        req.body;
+
+      const user = await AppUser.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Benutzer nicht gefunden" });
+      }
+
+      user.companyName = companyName || user.companyName;
+      user.companyTxn = companyTxn || user.companyTxn;
+      user.companyAddress = {
+        street: street || user.companyAddress.street,
+        house_no: house_no || user.companyAddress.house_no,
+        city: city || user.companyAddress.city,
+        postcode: postcode || user.companyAddress.postcode,
+      };
+
+      await user.save();
+
+      res.status(200).json({
+        message: "Firmenprofil erfolgreich gespeichert",
+        user,
+      });
+    } catch (error) {
+      console.error("Fehler beim Speichern des Firmenprofils:", error);
+      res.status(500).json({ message: "Serverfehler beim Speichern" });
+    }
+  },
+  uploadCompanyImages: async (req, res) => {
+    try {
+      const user = await AppUser.findById(req.user.id);
+      if (!user)
+        return res.status(404).json({ message: "Benutzer nicht gefunden" });
+
+      if (req.files.coverImage) {
+        user.coverImage = req.files.coverImage[0].filename;
+      }
+      if (req.files.companyLogo) {
+        user.companyLogo = req.files.companyLogo[0].filename;
+      }
+
+      await user.save();
+
+      res.status(200).json({ message: "Bilder erfolgreich hochgeladen", user });
+    } catch (err) {
+      console.error("Upload error:", err);
+      res.status(500).json({ message: "Fehler beim Speichern der Bilder" });
+    }
+  },
+  getProfile: async (req, res) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Nicht autorisiert" });
+      }
+
+      const user = await AppUser.findById(userId).select(
+        "-password -resetPasswordCode -resetPasswordExpires"
+      );
+
+      if (!user) {
+        return res.status(404).json({ message: "Benutzer nicht gefunden" });
+      }
+
+      res.status(200).json({ user });
+    } catch (error) {
+      console.error("Fehler beim Abrufen des Profils:", error);
+      res
+        .status(500)
+        .json({ message: "Serverfehler beim Abrufen des Profils" });
+    }
+  },
 };
 
 module.exports = userController;

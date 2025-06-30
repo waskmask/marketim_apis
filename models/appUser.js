@@ -15,6 +15,7 @@ const appUserSchema = new mongoose.Schema(
     },
     companyTxn: { type: String },
     companyLogo: { type: String },
+    coverImage: { type: String },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
     role: {
       type: String,
