@@ -18,7 +18,11 @@ mongoose
 // Middleware
 
 const corsOptions = {
-  origin: ["http://localhost:5000", "https://marketim.app"],
+  origin: [
+    "http://localhost:5000",
+    "https://marketim.app",
+    "https://admin.marketim.app",
+  ],
   credentials: true, // Considering you might be using credentials
   methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
