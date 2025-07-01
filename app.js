@@ -22,6 +22,7 @@ const corsOptions = {
     "http://localhost:5000",
     "https://marketim.app",
     "https://admin.marketim.app",
+    "https://marketim.de/",
   ],
   credentials: true, // Considering you might be using credentials
   methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE", "PATCH"],
