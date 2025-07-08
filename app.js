@@ -56,7 +56,15 @@ app.set("view engine", "ejs");
 
 // Serve static files
 app.use("/public", express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res) => {
+      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Access-Control-Allow-Methods", "GET");
+    },
+  })
+);
 
 const adminUserRoutes = require("./routes/adminUserRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
