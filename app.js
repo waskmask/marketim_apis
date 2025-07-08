@@ -65,6 +65,17 @@ app.use(
     },
   })
 );
+app.get("/proxy/image", (req, res) => {
+  const imageUrl = req.query.url;
+  if (!imageUrl) return res.status(400).send("Image URL is required");
+  request
+    .get(imageUrl)
+    .on("error", (err) => {
+      console.error("Proxy error:", err);
+      res.status(500).send("Error fetching image");
+    })
+    .pipe(res);
+});
 
 const adminUserRoutes = require("./routes/adminUserRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
