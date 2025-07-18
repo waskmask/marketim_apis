@@ -258,20 +258,22 @@ const userController = {
         custom_text_properties,
         products,
       } = req.body;
+      const userId = req.user?.id; // Extracted from decoded JWT
+      if (!userId) {
+        return res.status(401).json({ message: "Nicht autorisiert" });
+      }
 
       const templateData = {
-        user_id: req.user_id,
+        user_id: userId,
         template_size: parseInt(template_size),
         grid_layout: JSON.parse(grid_layout),
         background_color,
         date_properties: JSON.parse(date_properties),
         custom_text_properties: JSON.parse(custom_text_properties),
         products: JSON.parse(products),
-        pdf_url: req.files.pdf
-          ? `/uploads/templates/${req.files.pdf[0].filename}`
-          : "",
+        pdf_url: req.files.pdf ? `/uploads/${req.files.pdf[0].filename}` : "",
         image_url: req.files.image
-          ? `/uploads/templates/${req.files.image[0].filename}`
+          ? `/uploads/${req.files.image[0].filename}`
           : "",
         created_at: new Date(),
       };
