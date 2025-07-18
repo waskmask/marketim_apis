@@ -1,5 +1,6 @@
 require("dotenv").config(); // Ensure this is at the top to load environment variables
 const AppUser = require("../models/appUser"); // Consistent User model import
+const Template = require("../models/templates");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
@@ -245,6 +246,45 @@ const userController = {
       res
         .status(500)
         .json({ message: "Serverfehler beim Abrufen des Profils" });
+    }
+  },
+  saveTemplate: async (req, res) => {
+    try {
+      const {
+        template_size,
+        grid_layout,
+        background_color,
+        date_properties,
+        custom_text_properties,
+        products,
+      } = req.body;
+
+      const templateData = {
+        user_id: req.user_id,
+        template_size: parseInt(template_size),
+        grid_layout: JSON.parse(grid_layout),
+        background_color,
+        date_properties: JSON.parse(date_properties),
+        custom_text_properties: JSON.parse(custom_text_properties),
+        products: JSON.parse(products),
+        pdf_url: req.files.pdf
+          ? `/uploads/templates/${req.files.pdf[0].filename}`
+          : "",
+        image_url: req.files.image
+          ? `/uploads/templates/${req.files.image[0].filename}`
+          : "",
+        created_at: new Date(),
+      };
+
+      const template = new Template(templateData);
+      await template.save();
+
+      res
+        .status(201)
+        .json({ message: "Template saved successfully", template });
+    } catch (error) {
+      console.error("Error saving template:", error);
+      res.status(500).json({ error: "Failed to save template" });
     }
   },
 };

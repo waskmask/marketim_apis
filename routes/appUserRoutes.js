@@ -31,4 +31,13 @@ router.post(
   userController.uploadCompanyImages
 );
 
+router.post(
+  "/app/template/save",
+  authenticateToken,
+  upload.fields([
+    { name: "pdf", maxCount: 1 },
+    { name: "image", maxCount: 1 },
+  ]),
+  userController.saveTemplate
+);
 module.exports = router;
