@@ -289,6 +289,19 @@ const userController = {
       res.status(500).json({ error: "Failed to save template" });
     }
   },
+  getTemplates: async (req, res) => {
+    try {
+      const userId = req.user?.id; // Extracted from decoded JWT
+      if (!userId) {
+        return res.status(401).json({ message: "Nicht autorisiert" });
+      }
+      const templates = await Template.find({ user_id: userId });
+      res.status(200).json(templates);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      res.status(500).json({ error: "Failed to fetch templates" });
+    }
+  },
 };
 
 module.exports = userController;

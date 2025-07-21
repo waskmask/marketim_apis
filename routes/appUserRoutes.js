@@ -40,4 +40,5 @@ router.post(
   ]),
   userController.saveTemplate
 );
+router.get("/app/templates", authenticateToken, userController.getTemplates);
 module.exports = router;
